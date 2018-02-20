@@ -8,7 +8,7 @@ when that handler is called with a payload.
 
 # API
 for a detailed specification of this API,
-run the [unit tests](https://cdn.rawgit.com/ZenyWay/rx-with-event-handler-props/v1.1.0/spec/web/index.html)
+run the [unit tests](https://cdn.rawgit.com/ZenyWay/rx-with-event-handler-props/v1.1.1/spec/web/index.html)
 in your browser.
 
 ## example usage
