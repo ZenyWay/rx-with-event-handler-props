@@ -14,20 +14,21 @@
  * Limitations under the License.
  */
 const withEventHandlerProps = require('../').default
-const Subject = require('rxjs/Subject').Subject
+const createSubject = require('rx-subject').default
+const from = require('rxjs/observable/from').from
 
 describe('withEventHandlerProps:', function () {
   describe('when called with a string:', function () {
-    let op, src$, subscribe, subscription
+    let op, src, subscribe, subscription
 
     beforeEach(function () {
       op = withEventHandlerProps('baz')
-      src$ = new Subject()
+      src = createSubject()
       const next = jasmine.createSpy('next')
       const error = jasmine.createSpy('error')
       const complete = jasmine.createSpy('complete')
       subscribe = function () {
-        subscription = op(src$).subscribe(next, error, complete)
+        subscription = op(from(src.source$)).subscribe(next, error, complete)
       }
     })
 
@@ -47,10 +48,10 @@ describe('withEventHandlerProps:', function () {
           error = jasmine.createSpy('error')
           complete = jasmine.createSpy('complete')
           const op = withEventHandlerProps('baz')
-          const src$ = new Subject()
-          const sub = op(src$).subscribe(next, error, complete)
-          src$.next({ foo: 'foo' })
-          src$.next({ bar: 'bar' })
+          const src = createSubject()
+          const sub = op(from(src.source$)).subscribe(next, error, complete)
+          src.sink.next({ foo: 'foo' })
+          src.sink.next({ bar: 'bar' })
           sub.unsubscribe()
         })
 
@@ -77,13 +78,13 @@ describe('withEventHandlerProps:', function () {
           error = jasmine.createSpy('error')
           complete = jasmine.createSpy('complete')
           const op = withEventHandlerProps('baz')
-          const src$ = new Subject()
+          const src = createSubject()
           let onBaz
           next.and.callFake(function (x) {
             onBaz = x.onBaz
           })
-          const sub = op(src$).subscribe(next, error, complete)
-          src$.next({ foo: 'foo' })
+          const sub = op(from(src.source$)).subscribe(next, error, complete)
+          src.sink.next({ foo: 'foo' })
           onBaz('bar')
           sub.unsubscribe()
         })
@@ -114,9 +115,9 @@ describe('withEventHandlerProps:', function () {
           error = jasmine.createSpy('error')
           complete = jasmine.createSpy('complete')
           const op = withEventHandlerProps('event')
-          const src$ = new Subject()
-          const sub = op(src$).subscribe(next, error, complete)
-          src$.error('boom')
+          const src = createSubject()
+          const sub = op(from(src.source$)).subscribe(next, error, complete)
+          src.sink.error('boom')
           sub.unsubscribe()
         })
 
@@ -135,9 +136,9 @@ describe('withEventHandlerProps:', function () {
           error = jasmine.createSpy('error')
           complete = jasmine.createSpy('complete')
           const op = withEventHandlerProps('event')
-          const src$ = new Subject()
-          const sub = op(src$).subscribe(next, error, complete)
-          src$.complete()
+          const src = createSubject()
+          const sub = op(from(src.source$)).subscribe(next, error, complete)
+          src.sink.complete()
           sub.unsubscribe()
         })
 
@@ -159,13 +160,13 @@ describe('withEventHandlerProps:', function () {
       const error = jasmine.createSpy('error')
       const complete = jasmine.createSpy('complete')
       const op = withEventHandlerProps(project)('baz')
-      const src$ = new Subject()
+      const src = createSubject()
       let onBaz
       next.and.callFake(function (x) {
         onBaz = x.onBaz
       })
-      const sub = op(src$).subscribe(next, error, complete)
-      src$.next({ foo: 'foo' })
+      const sub = op(from(src.source$)).subscribe(next, error, complete)
+      src.sink.next({ foo: 'foo' })
       onBaz('bar')
       sub.unsubscribe()
     })
@@ -193,13 +194,13 @@ describe('withEventHandlerProps:', function () {
       const error = jasmine.createSpy('error')
       const complete = jasmine.createSpy('complete')
       const op = withEventHandlerProps()('baz')
-      const src$ = new Subject()
+      const src = createSubject()
       let onBaz
       next.and.callFake(function (x) {
         onBaz = x.onBaz
       })
-      const sub = op(src$).subscribe(next, error, complete)
-      src$.next({ foo: 'foo' })
+      const sub = op(from(src.source$)).subscribe(next, error, complete)
+      src.sink.next({ foo: 'foo' })
       onBaz('bar')
       sub.unsubscribe()
     })

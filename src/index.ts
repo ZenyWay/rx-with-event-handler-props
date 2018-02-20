@@ -14,15 +14,11 @@
  */
 ;
 import { Observable } from 'rxjs/Observable'
+import { merge } from 'rxjs/observable/merge'
 import { Subject } from 'rxjs/Subject'
-import 'rxjs/add/observable/merge'
-import 'rxjs/add/operator/defaultIfEmpty'
-import 'rxjs/add/operator/do'
-import 'rxjs/add/operator/ignoreElements'
-import 'rxjs/add/operator/map'
-import 'rxjs/add/operator/share'
-import 'rxjs/add/operator/takeUntil'
-import 'rxjs/add/operator/withLatestFrom'
+import {
+	defaultIfEmpty, ignoreElements, map, share, takeUntil, withLatestFrom
+} from 'rxjs/operators'
 
 export type EventHandlerProps<E> = EventHandlerProp<E> & Partial<EventProp<E>>
 
@@ -52,15 +48,18 @@ export default function withEventHandlerProps <E,L=EventProp<E>>(
 		const handlerKey = `on${capitalize(id)}`
 
 		return function <P>(props$: Observable<P>) {
-			const _props$ = props$.share()
+			const _props$ = props$.pipe(share())
 			const event$ = new Subject<L|EventProp<E>>()
 
-			return Observable.merge(
+			return merge(
 				_props$,
-				event$.withLatestFrom<L|EventProp<E>,P,P&(L|EventProp<E>)>(_props$, shallowMerge)
+				event$.pipe(
+					withLatestFrom<L|EventProp<E>,P,P&(L|EventProp<E>)>(_props$, shallowMerge)
+				)
+			).pipe(
+				map(withHandler),
+				takeUntil(_props$.pipe(ignoreElements(), defaultIfEmpty()))
 			)
-				.map(withHandler)
-				.takeUntil(_props$.ignoreElements().defaultIfEmpty())
 
 			function withHandler <Q>(props: Q): Q&EventHandlerProp<E> {
 				return { ...(props as any), [handlerKey]: handler }
