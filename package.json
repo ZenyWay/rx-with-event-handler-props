@@ -1,6 +1,6 @@
 {
   "name": "rx-with-event-handler-props",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "rxjs-based component behaviour for lifting a component-from-stream that adds an event-handler property and injects an event property when that handler is called with a payload",
   "main": "dist/index.min.js",
   "typings": "dist/index.d.ts",

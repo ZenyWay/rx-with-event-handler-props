@@ -182,7 +182,7 @@ describe('withEventHandlerProps:', function () {
         onBaz: jasmine.any(Function),
         baz: 'BAR'
       }])
-      expect(project).toHaveBeenCalledWith('baz', 'bar')
+      expect(project).toHaveBeenCalledWith('bar', 'baz')
     })
   })
 

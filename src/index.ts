@@ -40,7 +40,7 @@ export default function withEventHandlerProps <E,L>(
 	project: (id: string, payload: E) => L
 ): (id: string) => <P>(props$: Observable<P>) => Observable<P&L&EventHandlerProp<E>>
 export default function withEventHandlerProps <E,L=EventProp<E>>(
-	project: string|((id: string, payload: E) => L|EventProp<E>) = toEventProp
+	project: string|((payload: E, id?: string) => L|EventProp<E>) = toEventProp
 ) {
 	return typeof project !== 'function'
 	? withEventHandlerProps<E>()(project)
@@ -66,13 +66,13 @@ export default function withEventHandlerProps <E,L=EventProp<E>>(
 			}
 
 			function handler (payload: E) {
-				event$.next((<(id: string, pl: E) => EventProp<E>>project)(id, payload))
+				event$.next((<(pl: E, id: string) => EventProp<E>>project)(payload, id))
 			}
 		}
 	}
 }
 
-function toEventProp <E>(id: string, payload: E) {
+function toEventProp <E>(payload: E, id: string) {
 	return { event: { id, payload } }
 }
 
