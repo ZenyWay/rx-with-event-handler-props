@@ -61,7 +61,7 @@ declare function withEventHandlerProps <E,L>(
 	project: (payload: E, id?: string) => L
 ): (id: string) => EventHandlerPropsOperator<E,L>
 
-type EventHandlerPropsOperator<E,L=EventProp<L>> =
+type EventHandlerPropsOperator<E,L=EventProp<E>> =
 <P>(props$: Observable<P>) => Observable<P&EventHandlerProps<E,L>>
 
 type EventHandlerProps<E,L> = EventHandlerProp<E> & Partial<L>

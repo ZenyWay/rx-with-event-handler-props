@@ -20,7 +20,7 @@ import {
 	defaultIfEmpty, ignoreElements, map, share, takeUntil, withLatestFrom
 } from 'rxjs/operators'
 
-export type EventHandlerPropsOperator<E,L=EventProp<L>> =
+export type EventHandlerPropsOperator<E,L=EventProp<E>> =
 <P>(props$: Observable<P>) => Observable<P&EventHandlerProps<E,L>>
 
 export type EventHandlerProps<E,L> = EventHandlerProp<E> & Partial<L>
