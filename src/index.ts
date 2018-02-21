@@ -20,10 +20,13 @@ import {
 	defaultIfEmpty, ignoreElements, map, share, takeUntil, withLatestFrom
 } from 'rxjs/operators'
 
-export type EventHandlerProps<E> = EventHandlerProp<E> & Partial<EventProp<E>>
+export type EventHandlerPropsOperator<E,L=EventProp<L>> =
+<P>(props$: Observable<P>) => Observable<P&EventHandlerProps<E,L>>
+
+export type EventHandlerProps<E,L> = EventHandlerProp<E> & Partial<L>
 
 export interface EventHandlerProp<E> {
-  [onEventType: string]: (event: E) => void
+  [onId: string]: (event: E) => void
 }
 
 export interface EventProp<E> {
@@ -32,13 +35,13 @@ export interface EventProp<E> {
 
 export default function withEventHandlerProps <E>(
 	id: string
-): <P>(props$: Observable<P>) => Observable<P&EventHandlerProps<E>>
+): EventHandlerPropsOperator<E>
 export default function withEventHandlerProps <E>(
 	/* project = toEventProp */
-): (id: string) => <P>(props$: Observable<P>) => Observable<P&EventHandlerProps<E>>
+): (id: string) => EventHandlerPropsOperator<E>
 export default function withEventHandlerProps <E,L>(
-	project: (id: string, payload: E) => L
-): (id: string) => <P>(props$: Observable<P>) => Observable<P&L&EventHandlerProp<E>>
+	project: (payload: E, id?: string) => L
+): (id: string) => EventHandlerPropsOperator<E,L>
 export default function withEventHandlerProps <E,L=EventProp<E>>(
 	project: string|((payload: E, id?: string) => L|EventProp<E>) = toEventProp
 ) {

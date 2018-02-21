@@ -8,7 +8,7 @@ when that handler is called with a payload.
 
 # API
 for a detailed specification of this API,
-run the [unit tests](https://cdn.rawgit.com/ZenyWay/rx-with-event-handler-props/v1.1.2/spec/web/index.html)
+run the [unit tests](https://cdn.rawgit.com/ZenyWay/rx-with-event-handler-props/v1.1.3/spec/web/index.html)
 in your browser.
 
 ## example usage
@@ -30,11 +30,15 @@ export componentFromStream(Clickable, behaviour)
 
 by default, when the handler from the `EventHanderProp` is called,
 its payload is mapped to an `EventProp` property on the object emitted
-by the output stream.
+by the output stream:
+```ts
+(payload: E, id: string) => ({ event: { id, payload } })
+```
 alternatively, `withEventHandler` may be called
 with a custom event-to-event-prop mapping function
 that maps the handler's payload to a custom property on the output object.
-this may be used for example to generate an 'action' property instead:
+this may be used for example to generate an 'action' property
+instead of `EventProp`:
 ```tsx
 const createAction = type => payload => ({ action: { type, payload } })
 const behaviour = compose(
@@ -49,20 +53,21 @@ const behaviour = compose(
 ```ts
 declare function withEventHandlerProps <E>(
 	id: string
-): <P>(props$: Observable<P>) => Observable<P&EventHandlerProps<E>>
+): EventHandlerPropsOperator<E>
 declare function withEventHandlerProps <E>(
-	/* project = toEventProp */
-): (id: string) => <P>(props$: Observable<P>) => Observable<P&EventHandlerProps<E>>
+	/* project = (payload: E, id?: string) => ({ event: { id, payload } }) */
+): (id: string) => EventHandlerPropsOperator<E>
 declare function withEventHandlerProps <E,L>(
-	project: (id: string, payload: E) => L
-): (id: string) => <P>(props$: Observable<P>) => Observable<P&L&EventHandlerProp<E>>
+	project: (payload: E, id?: string) => L
+): (id: string) => EventHandlerPropsOperator<E,L>
 
-type EventHandlerProps<E,L> = EventHandlerProp<E> & Partial<EventProp<L>>
+type EventHandlerPropsOperator<E,L=EventProp<L>> =
+<P>(props$: Observable<P>) => Observable<P&EventHandlerProps<E,L>>
 
-type EventHandlerProps<E> = EventHandlerProp<E> & Partial<EventProp<E>>
+type EventHandlerProps<E,L> = EventHandlerProp<E> & Partial<L>
 
 interface EventHandlerProp<E> {
-  [onEventType: string]: (event: E) => void
+  [onId: string]: (event: E) => void
 }
 
 interface EventProp<E> {
