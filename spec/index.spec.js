@@ -1,3 +1,4 @@
+
 'use strict' /* eslint-env jasmine */
 /**
  * @license
@@ -14,8 +15,12 @@
  * Limitations under the License.
  */
 const withEventHandlerProps = require('../').default
+const hasEventHandler = require('../').hasEventHandler
+const hasEvent = require('../').hasEvent
 const createSubject = require('rx-subject').default
+const into = require('basic-cursors').into
 const from = require('rxjs/observable/from').from
+const map = require('rxjs/operators').map
 
 describe('withEventHandlerProps:', function () {
   describe('when called with a string:', function () {
@@ -152,13 +157,13 @@ describe('withEventHandlerProps:', function () {
   })
 
   describe('when called with a function:', function () {
-    let next, project
+    let next, error, complete, project
 
     beforeEach(function () {
       project = jasmine.createSpy('project').and.returnValue({ baz: 'BAR' })
       next = jasmine.createSpy('next')
-      const error = jasmine.createSpy('error')
-      const complete = jasmine.createSpy('complete')
+      error = jasmine.createSpy('error')
+      complete = jasmine.createSpy('complete')
       const op = withEventHandlerProps(project)('baz')
       const src = createSubject()
       let onBaz
@@ -168,6 +173,7 @@ describe('withEventHandlerProps:', function () {
       const sub = op(from(src.source$)).subscribe(next, error, complete)
       src.sink.next({ foo: 'foo' })
       onBaz('bar')
+      src.sink.complete()
       sub.unsubscribe()
     })
 
@@ -183,16 +189,18 @@ describe('withEventHandlerProps:', function () {
         baz: 'BAR'
       }])
       expect(project).toHaveBeenCalledWith('bar', 'baz')
+      expect(error).not.toHaveBeenCalled()
+      expect(complete).toHaveBeenCalledTimes(1)
     })
   })
 
   describe('when called without arguments:', function () {
-    let next
+    let next, error, complete
 
     beforeEach(function () {
       next = jasmine.createSpy('next')
-      const error = jasmine.createSpy('error')
-      const complete = jasmine.createSpy('complete')
+      error = jasmine.createSpy('error')
+      complete = jasmine.createSpy('complete')
       const op = withEventHandlerProps()('baz')
       const src = createSubject()
       let onBaz
@@ -202,6 +210,7 @@ describe('withEventHandlerProps:', function () {
       const sub = op(from(src.source$)).subscribe(next, error, complete)
       src.sink.next({ foo: 'foo' })
       onBaz('bar')
+      src.sink.complete()
       sub.unsubscribe()
     })
 
@@ -216,6 +225,69 @@ describe('withEventHandlerProps:', function () {
         onBaz: jasmine.any(Function),
         event: { id: 'baz', payload: 'bar' }
       }])
+      expect(error).not.toHaveBeenCalled()
+      expect(complete).toHaveBeenCalledTimes(1)
     })
+  })
+})
+
+describe('hasEventHandler', function () {
+  let next, error, complete
+
+  beforeEach(function () {
+    next = jasmine.createSpy('next')
+    error = jasmine.createSpy('error')
+    complete = jasmine.createSpy('complete')
+    const src = createSubject()
+    const sub = from(src.source$).pipe(
+      withEventHandlerProps('baz'),
+      map(into('baz')(hasEventHandler('baz'))),
+      map(into('bar')(hasEventHandler('bar')))
+    ).subscribe(next, error, complete)
+    src.sink.next({ foo: 'foo' })
+    src.sink.complete()
+    sub.unsubscribe()
+  })
+
+  it('returns a predicate that validates whether input objects ' +
+  'include an event handler property for the given `id`:', function () {
+    expect(next).toHaveBeenCalledWith(jasmine.objectContaining({
+      foo: 'foo',
+      baz: true,
+      bar: false
+    }))
+    expect(error).not.toHaveBeenCalled()
+    expect(complete).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('hasEvent', function () {
+  let next, error, complete
+
+  beforeEach(function () {
+    next = jasmine.createSpy('next')
+    error = jasmine.createSpy('error')
+    complete = jasmine.createSpy('complete')
+    const src = createSubject()
+    const sub = from(src.source$).pipe(
+      withEventHandlerProps('baz'),
+      map(into('baz')(hasEvent('baz'))),
+    ).subscribe(next, error, complete)
+    let onBaz
+    next.and.callFake(function (x) { onBaz = x.onBaz })
+    src.sink.next({ foo: 'foo' })
+    onBaz('!!!')
+    src.sink.complete()
+    sub.unsubscribe()
+  })
+
+  it('returns a predicate that validates whether input objects ' +
+  'include an event property with the given `id`:', function () {
+    expect(next.calls.allArgs()).toEqual([
+      [jasmine.objectContaining({ foo: 'foo', baz: false })],
+      [jasmine.objectContaining({ foo: 'foo', baz: true })]
+    ])
+    expect(error).not.toHaveBeenCalled()
+    expect(complete).toHaveBeenCalledTimes(1)
   })
 })

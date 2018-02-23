@@ -48,11 +48,12 @@ export default function withEventHandlerProps <E,L=EventProp<E>>(
 	return typeof project !== 'function'
 	? withEventHandlerProps<E>()(project)
 	: function (id: string) {
-		const handlerKey = `on${capitalize(id)}`
+		const key = toHandlerKey(id)
 
 		return function <P>(props$: Observable<P>) {
 			const _props$ = props$.pipe(share())
 			const event$ = new Subject<L|EventProp<E>>()
+			;(<any>handler).__eventId = id // for identification with hasEventHandler
 
 			return merge(
 				_props$,
@@ -65,7 +66,7 @@ export default function withEventHandlerProps <E,L=EventProp<E>>(
 			)
 
 			function withHandler <Q>(props: Q): Q&EventHandlerProp<E> {
-				return { ...(props as any), [handlerKey]: handler }
+				return { ...(props as any), [key]: handler }
 			}
 
 			function handler (payload: E) {
@@ -75,8 +76,26 @@ export default function withEventHandlerProps <E,L=EventProp<E>>(
 	}
 }
 
+export function hasEventHandler (id: string) {
+	const k = toHandlerKey(id)
+	return function (p: any): boolean {
+		const fn = p && p[k]
+		return (fn && fn.__eventId) === id
+	}
+}
+
+export function hasEvent (id: string) {
+	return function (p: any) {
+		return (p && p.event && p.event.id) === id
+	}
+}
+
 function toEventProp <E>(payload: E, id: string) {
 	return { event: { id, payload } }
+}
+
+function toHandlerKey (id: string): string {
+	return `on${capitalize(id)}`
 }
 
 function capitalize (str: string): string {
