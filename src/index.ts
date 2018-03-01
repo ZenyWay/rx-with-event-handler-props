@@ -17,7 +17,7 @@ import { Observable } from 'rxjs/Observable'
 import { merge } from 'rxjs/observable/merge'
 import { Subject } from 'rxjs/Subject'
 import {
-	defaultIfEmpty, ignoreElements, map, share, takeUntil, withLatestFrom
+  defaultIfEmpty, ignoreElements, map, share, takeUntil, withLatestFrom
 } from 'rxjs/operators'
 
 export type EventHandlerPropsOperator<E,L=EventProp<E>> =
@@ -29,79 +29,98 @@ export interface EventHandlerProp<E> {
   [onId: string]: (event: E) => void
 }
 
-export interface EventProp<E> {
-	event: { id: string, payload: E }
+export interface EventProp<E,P=void> {
+  event: { id: string, payload: E|P, event?: E }
+}
+
+export interface EventMapper<E,L=EventProp<E>> {
+  (event: E, id?: string): L
+  <P>(payload: P, event: E, id?: string): L
 }
 
 export default function withEventHandlerProps <E>(
-	id: string
+  id: string
 ): EventHandlerPropsOperator<E>
 export default function withEventHandlerProps <E>(
-	/* project = toEventProp */
+  /* project = toEventProp */
 ): (id: string) => EventHandlerPropsOperator<E>
-export default function withEventHandlerProps <E,L>(
-	project: (payload: E, id?: string) => L
+export default function withEventHandlerProps <E,L=EventProp<E>>(
+  project: EventMapper<E,L>
 ): (id: string) => EventHandlerPropsOperator<E,L>
 export default function withEventHandlerProps <E,L=EventProp<E>>(
-	project: string|((payload: E, id?: string) => L|EventProp<E>) = toEventProp
+  project: string|EventMapper<E,L> = <EventMapper<E,any>>toEventProp
 ) {
-	return typeof project !== 'function'
-	? withEventHandlerProps<E>()(project)
-	: function (id: string) {
-		const key = toHandlerKey(id)
+  return !isFunction(project)
+  ? withEventHandlerProps<E>()(project)
+  : function (id: string) {
+    const key = toHandlerKey(id)
 
-		return function <P>(props$: Observable<P>) {
-			const _props$ = props$.pipe(share())
-			const event$ = new Subject<L|EventProp<E>>()
-			;(<any>handler).__eventId = id // for identification with hasEventHandler
+    return function <P>(props$: Observable<P>) {
+      const _props$ = props$.pipe(share())
+      const event$ = new Subject<L|EventProp<E>>()
+      ;(<any>handler).__eventId = id // for identification with hasEventHandler
 
-			return merge(
-				_props$,
-				event$.pipe(
-					withLatestFrom<L|EventProp<E>,P,P&(L|EventProp<E>)>(_props$, shallowMerge)
-				)
-			).pipe(
-				map(withHandler),
-				takeUntil(_props$.pipe(ignoreElements(), defaultIfEmpty()))
-			)
+      return merge(
+        _props$,
+        event$.pipe(
+          withLatestFrom<L|EventProp<E>,P,P&(L|EventProp<E>)>(_props$, shallowMerge)
+        )
+      ).pipe(
+        map(withHandler),
+        takeUntil(_props$.pipe(ignoreElements(), defaultIfEmpty()))
+      )
 
-			function withHandler <Q>(props: Q): Q&EventHandlerProp<E> {
-				return { ...(props as any), [key]: handler }
-			}
+      function withHandler <Q>(props: Q): Q&EventHandlerProp<E> {
+        return { ...(props as any), [key]: handler }
+      }
 
-			function handler (payload: E) {
-				event$.next((<(pl: E, id: string) => EventProp<E>>project)(payload, id))
-			}
-		}
-	}
+      function handler (payload: E): void
+      function handler <P>(payload: P, event: E): void
+      function handler (payload: any, event?: any): void {
+        event$.next(
+          arguments.length > 1
+          ? (<EventMapper<E,any>>project)(payload, event, id)
+          : (<EventMapper<E,any>>project)(payload, id)
+        )
+      }
+    }
+  }
 }
 
 export function hasEventHandler (id: string) {
-	const k = toHandlerKey(id)
-	return function (p: any): boolean {
-		const fn = p && p[k]
-		return (fn && fn.__eventId) === id
-	}
+  const k = toHandlerKey(id)
+  return function (p: any): boolean {
+    const fn = p && p[k]
+    return (fn && fn.__eventId) === id
+  }
 }
 
 export function hasEvent (id: string) {
-	return function (p: any) {
-		return (p && p.event && p.event.id) === id
-	}
+  return function (p: any) {
+    return (p && p.event && p.event.id) === id
+  }
 }
 
-function toEventProp <E>(payload: E, id: string) {
-	return { event: { id, payload } }
+function toEventProp <E>(payload: E, id: string): EventProp<E>
+function toEventProp <E,P>(payload: P, event: E, id: string): EventProp<E,P>
+function toEventProp (payload: any, idOrEvent: any, id?: string): EventProp<any,any> {
+  return arguments.length === 3
+    ? { event: { id, payload, event: idOrEvent } }
+    : { event: { id: idOrEvent, payload } }
 }
 
 function toHandlerKey (id: string): string {
-	return `on${capitalize(id)}`
+  return `on${capitalize(id)}`
 }
 
 function capitalize (str: string): string {
-	return str[0].toUpperCase() + str.slice(1).toLowerCase()
+  return str[0].toUpperCase() + str.slice(1).toLowerCase()
 }
 
 function shallowMerge (event: any, props: any) {
-	return { ...event, ...props }
+  return { ...event, ...props }
+}
+
+function isFunction (v: any): v is Function {
+  return typeof v === 'function'
 }

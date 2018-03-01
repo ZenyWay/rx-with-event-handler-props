@@ -75,7 +75,9 @@ describe('withEventHandlerProps:', function () {
         })
       })
 
-      describe('when the handler from the EventHandlerProp is called:', function () {
+      describe('when the handler from the EventHandlerProp is called, ' +
+      'either with a single payload, or with both a payload ' +
+      'and an event argument (Inferno LinkEvent):', function () {
         let next, error, complete
 
         beforeEach(function () {
@@ -91,6 +93,7 @@ describe('withEventHandlerProps:', function () {
           const sub = op(from(src.source$)).subscribe(next, error, complete)
           src.sink.next({ foo: 'foo' })
           onBaz('bar')
+          onBaz('foo', 'bar')
           sub.unsubscribe()
         })
 
@@ -106,6 +109,11 @@ describe('withEventHandlerProps:', function () {
             foo: 'foo',
             onBaz: jasmine.any(Function),
             event: { id: 'baz', payload: 'bar' }
+          }])
+          expect(next.calls.argsFor(2)).toEqual([{
+            foo: 'foo',
+            onBaz: jasmine.any(Function),
+            event: { id: 'baz', payload: 'foo', event: 'bar' }
           }])
           expect(error).not.toHaveBeenCalled()
           expect(complete).not.toHaveBeenCalled()

@@ -8,7 +8,7 @@ when that handler is called with a payload.
 
 # API
 for a detailed specification of this API,
-run the [unit tests](https://cdn.rawgit.com/ZenyWay/rx-with-event-handler-props/v1.2.0/spec/web/index.html)
+run the [unit tests](https://cdn.rawgit.com/ZenyWay/rx-with-event-handler-props/v1.3.0/spec/web/index.html)
 in your browser.
 
 ## example usage
@@ -52,13 +52,13 @@ const behaviour = compose(
 ## type definitions
 ```ts
 declare function withEventHandlerProps <E>(
-	id: string
+  id: string
 ): EventHandlerPropsOperator<E>
 declare function withEventHandlerProps <E>(
-	/* project = (payload: E, id?: string) => ({ event: { id, payload } }) */
+  /* project = (payload: E, id: string) => ({ event: { id, payload } }) */
 ): (id: string) => EventHandlerPropsOperator<E>
 declare function withEventHandlerProps <E,L>(
-	project: (payload: E, id?: string) => L
+  project: EventMapper<E,L>
 ): (id: string) => EventHandlerPropsOperator<E,L>
 
 declare function hasEventHandler(id: string): (p: any) => boolean
@@ -75,7 +75,12 @@ interface EventHandlerProp<E> {
 }
 
 interface EventProp<E> {
-	event: { id: string, payload: E }
+  event: { id: string, payload: E|P, event?: E } // event? from Inferno LinkEvent
+}
+
+interface EventMapper<E,L=EventProp<E>> {
+  (event: E, id?: string): L
+  <P>(payload: P, event: E, id?: string): L // Inferno LinkEvent signature
 }
 ```
 in addition to the `withEventHandlerProps` default export,
