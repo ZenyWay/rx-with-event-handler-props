@@ -95,6 +95,10 @@ export function hasEventHandler (id: string) {
   }
 }
 
+export function toHandlerKey (id: string): string {
+  return `on${capitalize(id)}`
+}
+
 export function hasEvent (id: string) {
   return function (p: any) {
     return (p && p.event && p.event.id) === id
@@ -107,10 +111,6 @@ function toEventProp (payload: any, idOrEvent: any, id?: string): EventProp<any,
   return arguments.length === 3
     ? { event: { id, payload, event: idOrEvent } }
     : { event: { id: idOrEvent, payload } }
-}
-
-function toHandlerKey (id: string): string {
-  return `on${capitalize(id)}`
 }
 
 function capitalize (str: string): string {

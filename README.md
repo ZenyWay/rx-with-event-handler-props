@@ -8,7 +8,7 @@ when that handler is called with a payload.
 
 # API
 for a detailed specification of this API,
-run the [unit tests](https://cdn.rawgit.com/ZenyWay/rx-with-event-handler-props/v1.3.0/spec/web/index.html)
+run the [unit tests](https://cdn.rawgit.com/ZenyWay/rx-with-event-handler-props/v1.4.0/spec/web/index.html)
 in your browser.
 
 ## example usage
@@ -62,7 +62,7 @@ declare function withEventHandlerProps <E,L>(
 ): (id: string) => EventHandlerPropsOperator<E,L>
 
 declare function hasEventHandler(id: string): (p: any) => boolean
-
+declare function toHandlerKey (id: string): string
 declare function hasEvent(id: string): (p: any) => boolean
 
 type EventHandlerPropsOperator<E,L=EventProp<E>> =
@@ -84,7 +84,9 @@ interface EventMapper<E,L=EventProp<E>> {
 }
 ```
 in addition to the `withEventHandlerProps` default export,
-this module also exports two utility functions: `hasEventHandler` and `hasEvent`.
+this module also exports three utility functions:
+`hasEventHandler`, `hasEvent` and `toHandlerKey`.
+the latter returns the `props` key of the handler function.
 
 # TypeScript
 although this library is written in [TypeScript](https://www.typescriptlang.org),
