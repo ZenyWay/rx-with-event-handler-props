@@ -13,9 +13,7 @@
  * Limitations under the License.
  */
 ;
-import { Observable } from 'rxjs/Observable'
-import { merge } from 'rxjs/observable/merge'
-import { Subject } from 'rxjs/Subject'
+import { Observable, Subject, merge } from 'rxjs'
 import {
   defaultIfEmpty, ignoreElements, map, share, takeUntil, withLatestFrom
 } from 'rxjs/operators'

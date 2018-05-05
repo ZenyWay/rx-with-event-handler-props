@@ -14,12 +14,13 @@
  * See the License for the specific language governing permissions and
  * Limitations under the License.
  */
+require('symbol-observable')
 const withEventHandlerProps = require('../').default
 const hasEventHandler = require('../').hasEventHandler
 const hasEvent = require('../').hasEvent
 const createSubject = require('rx-subject').default
 const into = require('basic-cursors').into
-const from = require('rxjs/observable/from').from
+const from = require('rxjs').from
 const map = require('rxjs/operators').map
 
 describe('withEventHandlerProps:', function () {
